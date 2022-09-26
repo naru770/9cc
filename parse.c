@@ -17,10 +17,11 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
 }
 
 // 入力文字列pをトークナイズしてそれを返す。
-Token *tokenize(char *p) {
+void tokenize() {
   Token head;
   head.next = NULL;
   Token *cur = &head;
+  char *p = user_input;
 
   while (*p) {
     // 空白文字をスキップ
@@ -41,8 +42,15 @@ Token *tokenize(char *p) {
     if (*p == '+' || *p == '-' ||
         *p == '*' || *p == '/' ||
         *p == '(' || *p == ')' ||
-        *p == '<' || *p == '>') {
+        *p == '<' || *p == '>' ||
+        *p == ';' || *p == '=') {
       cur = new_token(TK_RESERVED, cur, p++, 1);
+      continue;
+    }
+
+    if ('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
+      cur->len = 1;
       continue;
     }
 
@@ -56,7 +64,8 @@ Token *tokenize(char *p) {
   }
 
   new_token(TK_EOF, cur, p, 0);
-  return head.next;
+  token = head.next;
+  return;
 }
 
 
@@ -93,6 +102,15 @@ bool consume(char *op) {
     return false;
   token = token->next;
   return true;
+}
+
+//////////////////////////// 要見直し ////////////////////////////
+Token *consume_ident() {
+  if (token->kind != TK_IDENT)
+    return NULL;
+  Token *ret = token;
+  token = token->next;
+  return ret;
 }
 
 // 次のトークンが期待している記号の時には、トークンを1つ読み進める。
@@ -134,9 +152,29 @@ Node *new_node_num(int val) {
   return node;
 }
 
+void program() {
+  int i = 0;
+  while (!at_eof()) {
+    code[i++] = stmt();
+  }
+  code[i] = NULL;
+}
+
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
+Node *assign() {
+  Node *node = equality();
+  if (consume("="))
+    node = new_node(ND_ASSIGN, node, assign());
+  return node;
+}
 
 Node *expr() {
-  return equality();
+  return assign();
 }
 
 Node *equality() {
@@ -208,6 +246,15 @@ Node *primary() {
   if (consume("(")) {
     Node *node = expr();
     expect(")");
+    return node;
+  }
+
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
+    fprintf(stderr, "\n\n%c\n\n", tok->str[0]);
     return node;
   }
 
