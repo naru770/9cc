@@ -104,7 +104,7 @@ bool consume(char *op) {
   return true;
 }
 
-//////////////////////////// 要見直し ////////////////////////////
+
 Token *consume_ident() {
   if (token->kind != TK_IDENT)
     return NULL;
@@ -254,7 +254,6 @@ Node *primary() {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
     node->offset = (tok->str[0] - 'a' + 1) * 8;
-    fprintf(stderr, "\n\n%c\n\n", tok->str[0]);
     return node;
   }
 
