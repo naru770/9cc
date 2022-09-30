@@ -44,6 +44,15 @@ bool consume(char *op) {
   return true;
 }
 
+// トークンの種類が一致していれば1つ読み進めて真を返す。
+bool consume_kind(TokenKind kind) {
+  if (token->kind == kind) {
+    token = token->next;
+    return true;
+  }
+  return false;
+}
+
 // 変数ならば読み進める
 Token *consume_ident() {
   if (token->kind != TK_IDENT)
@@ -67,7 +76,7 @@ void expect(char *op) {
 // それ以外の場合にはエラーを報告する。
 int expect_number() {
   if (token->kind != TK_NUM)
-    error("数字ではありません");
+    error("数字ではありません token kind: %d", token->kind);
   int val = token->val;
   token = token->next;
   return val;
@@ -101,7 +110,17 @@ void program() {
 }
 
 Node *stmt() {
-  Node *node = expr();
+  Node *node;
+
+  if (consume_kind(TK_RETURN)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_RETURN;
+    node->rhs = NULL;
+    node->lhs = expr();
+  } else {
+    node = expr();
+  }
+
   expect(";");
   return node;
 }

@@ -3,28 +3,33 @@
 void debug_token() {
   fprintf(stderr, "debug token list:\n");
   Token *cur = token;
+
   while (cur->kind != TK_EOF) {
     switch (cur->kind) {
     case TK_RESERVED:
     case TK_IDENT:
       if (cur->kind == TK_RESERVED)
-        fprintf(stderr, "RESERVED: ");
+        fprintf(stderr, "RESERVED:   ");
       else
-        fprintf(stderr, "TK_IDENT: ");
+        fprintf(stderr, "TK_IDENT:   ");
       
       for (int i = 0; i < (cur->len); i++)
         fprintf(stderr, "%c", *(cur->str + i));
       fprintf(stderr, "\n");
       break;
     case TK_NUM:
-      fprintf(stderr, "TK_NUM:   %d\n", cur->val);
+      fprintf(stderr, "TK_NUM:     %d\n", cur->val);
       break;
     case TK_EOF:
       fprintf(stderr, "TK_EOF\n");
       break;
+    case TK_RETURN:
+      fprintf(stderr, "TK_RETURN:  return\n");
+      break;
     default:
-      fprintf(stderr, "ERR\n");
+      fprintf(stderr, "ERR:   %d\n", cur->kind);
     }
+
     cur = cur->next;
   }
   fprintf(stderr, "\n\n");
@@ -42,6 +47,19 @@ void debug_tree() {
 
 
 void print_node(Node *node) {
+
+  if (node->lhs != NULL && node->rhs == NULL) {
+    switch (node->kind) {
+    case ND_RETURN:
+      fprintf(stderr, "return");
+      break;
+    default:
+      break;
+    }
+
+    print_node(node->lhs);
+    return;
+  }
 
   fprintf(stderr, "(");
 
@@ -81,6 +99,9 @@ void print_node(Node *node) {
     break;
   case ND_LVAR:
    fprintf(stderr, "lval");
+    break;
+  case ND_RETURN:
+    fprintf(stderr, "return");
     break;
   default:
     fprintf(stderr, "err");

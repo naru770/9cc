@@ -17,13 +17,11 @@ int main(int argc, char **argv) {
   user_input = argv[1];
   tokenize();
 
-  // debug token
   debug_token();
-
+  
   // 構文木生成
   program();
 
-  // debug tree
   debug_tree();
 
   // アセンブリの前半部分を出力

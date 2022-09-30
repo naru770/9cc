@@ -18,6 +18,7 @@ typedef enum {
   ND_NUM, // 整数
   ND_ASSIGN,  // =
   ND_LVAR,  // ローカル変数
+  ND_RETURN // return
 } NodeKind;
 
 typedef struct Node Node;
@@ -33,6 +34,7 @@ struct Node {
 
 typedef enum {
   TK_RESERVED,
+  TK_RETURN,
   TK_IDENT,
   TK_NUM,
   TK_EOF,
@@ -58,15 +60,18 @@ struct LVar {
   int offset;
 };
 
+// tokenize.c
+bool at_eof();
+Token *new_token(TokenKind, Token *, char *, int);
+void tokenize();
+int is_alnum(char);
 
+// parse.c
 void error_at(char *, char *, ...);
 void error(char *, ...);
 bool consume(char *);
 void expect(char *);
 int expect_number();
-bool at_eof();
-Token *new_token(TokenKind, Token *, char *, int);
-void tokenize();
 Node *new_node(NodeKind, Node *, Node *);
 Node *new_node_num(int);
 void program();
@@ -79,8 +84,12 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+
+// codegen.c
+void gen_lval(Node *node);
 void gen(Node *);
 
+// debug.c
 void debug_token();
 void print_node();
 void debug_tree();
