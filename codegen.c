@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdbool.h>
 #include "9cc.h"
 
 void gen_lval(Node *node) {

@@ -1,73 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdbool.h>
 #include "9cc.h"
 
-// 新しいトークンを作成してcurに繋げる
-Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
-  Token *tok = calloc(1, sizeof(Token));
-  tok->kind = kind;
-  tok->str = str;
-  tok->len = len;
-  cur->next = tok;
-  return tok;
-}
-
-// 入力文字列pをトークナイズしてそれを返す。
-void tokenize() {
-  Token head;
-  head.next = NULL;
-  Token *cur = &head;
-  char *p = user_input;
-
-  while (*p) {
-    // 空白文字をスキップ
-    if (isspace(*p)) {
-      p++;
-      continue;
-    }
-
-    if (memcmp(p, "==", 2) == 0 ||
-        memcmp(p, "!=", 2) == 0 ||
-        memcmp(p, "<=", 2) == 0 ||
-        memcmp(p, ">=", 2) == 0) {
-      cur = new_token(TK_RESERVED, cur, p, 2);
-      p += 2;
-      continue;
-    }
-
-    if (*p == '+' || *p == '-' ||
-        *p == '*' || *p == '/' ||
-        *p == '(' || *p == ')' ||
-        *p == '<' || *p == '>' ||
-        *p == ';' || *p == '=') {
-      cur = new_token(TK_RESERVED, cur, p++, 1);
-      continue;
-    }
-
-    if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
-      cur->len = 1;
-      continue;
-    }
-
-    if (isdigit(*p)) {
-      cur = new_token(TK_NUM, cur, p, 0);
-      cur->val = strtol(p, &p, 10);
-      continue;
-    }
-
-    error("トークナイズできません");
+// 変数を名前で検索する
+LVar *find_lvar(Token *tok) {
+  for (LVar *var = locals; var; var = var->next) {
+    if (tok->len == var->len && memcmp(tok->str, var->name, var->len) == 0)
+      return var;
   }
-
-  new_token(TK_EOF, cur, p, 0);
-  token = head.next;
-  return;
+  return NULL;
 }
-
 
 // エラー個所を報告する
 void error_at(char *loc, char *fmt, ...) {
@@ -104,7 +44,7 @@ bool consume(char *op) {
   return true;
 }
 
-
+// 変数ならば読み進める
 Token *consume_ident() {
   if (token->kind != TK_IDENT)
     return NULL;
@@ -253,7 +193,20 @@ Node *primary() {
   if (tok) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = (tok->str[0] - 'a' + 1) * 8;
+    LVar *lvar = find_lvar(tok);
+
+    // 変数リストになければ追加
+    if (lvar) {
+      node->offset = lvar->offset;
+    } else {
+      lvar = calloc(1, sizeof(LVar));
+      lvar->next = locals;
+      lvar->len = tok->len;
+      lvar->name = tok->str;
+      lvar->offset = (locals) ? locals->offset + 8 : 8;
+      node->offset = lvar->offset;
+      locals = lvar;
+    }
     return node;
   }
 

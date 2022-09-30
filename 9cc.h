@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <string.h>
 #include <stdbool.h>
 
 // 抽象構文木のノードの種類
@@ -43,6 +48,16 @@ struct Token {
   int len;        // トークンの長さ
 };
 
+typedef struct LVar LVar;
+
+// ローカル変数の型
+struct LVar {
+  LVar *next;
+  char *name;
+  int len;
+  int offset;
+};
+
 
 void error_at(char *, char *, ...);
 void error(char *, ...);
@@ -73,3 +88,5 @@ void debug_tree();
 extern Token *token;
 extern char *user_input;
 extern Node *code[100];
+
+extern LVar *locals;

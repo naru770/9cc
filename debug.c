@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdbool.h>
 #include "9cc.h"
 
 void debug_token() {
@@ -17,6 +11,7 @@ void debug_token() {
         fprintf(stderr, "RESERVED: ");
       else
         fprintf(stderr, "TK_IDENT: ");
+      
       for (int i = 0; i < (cur->len); i++)
         fprintf(stderr, "%c", *(cur->str + i));
       fprintf(stderr, "\n");

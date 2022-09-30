@@ -28,6 +28,8 @@ assert 0 '1 == 0;'
 assert 1 '123 != 6;'
 assert 0 '8 < 2;'
 assert 1 '29 <= 55;'
+assert 4 'a = 2; b = 4;'
 assert 11 'a = 9; b = a + 2;'
+assert 12 'foo = 10; bar = 2; r = foo + bar;'
 
 echo OK
