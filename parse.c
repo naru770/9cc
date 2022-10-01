@@ -102,11 +102,15 @@ Node *new_node_num(int val) {
 }
 
 void program() {
-  int i = 0;
+  Vector *cur = code = calloc(1, sizeof(Vector));
+
   while (!at_eof()) {
-    code[i++] = stmt();
+    cur->value = stmt();
+    cur->next = calloc(1, sizeof(Vector));
+    cur = cur->next;
   }
-  code[i] = NULL;
+  cur->value = NULL;
+  cur->next = NULL;
 }
 
 Node *stmt() {

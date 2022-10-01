@@ -2,7 +2,8 @@
 
 Token *token;
 char *user_input;
-Node *code[100];
+Vector *code;
+// Node *code[100];
 LVar *locals;
 
 int main(int argc, char **argv) {
@@ -34,12 +35,18 @@ int main(int argc, char **argv) {
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, 208\n");
-  
-  for (int i = 0; code[i]; i++) {
-    gen(code[i]);
+
+  for (Vector *cur = code; cur->value != NULL; cur = cur->next) {
+    gen(cur->value);
 
     printf("  pop rax\n");
   }
+  
+  // for (int i = 0; code[i]; i++) {
+  //   gen(code[i]);
+
+  //   printf("  pop rax\n");
+  // }
 
   // エピローグ
   printf("  mov rsp, rbp\n");

@@ -38,10 +38,15 @@ void debug_token() {
 
 void debug_tree() {
   fprintf(stderr, "reproduce program from syntax tree:\n");
-  for (int i = 0; code[i]; i++) {
-    print_node(code[i]);
+  for (Vector *cur = code; cur->value != NULL; cur = cur->next) {
+    print_node(cur->value);
     fprintf(stderr, "\n");
   }
+
+  // for (int i = 0; code[i]; i++) {
+  //   print_node(code[i]);
+  //   fprintf(stderr, "\n");
+  // }
   fprintf(stderr, "\n");
 }
 

@@ -40,6 +40,14 @@ typedef enum {
   TK_EOF,
 } TokenKind;
 
+// ノード列
+typedef struct Vector Vector;
+
+struct Vector {
+  Vector *next;
+  Node *value;
+};
+
 typedef struct Token Token;
 
 struct Token {
@@ -96,6 +104,7 @@ void debug_tree();
 
 extern Token *token;
 extern char *user_input;
-extern Node *code[100];
+// extern Node *code[100];
+extern Vector *code;
 
 extern LVar *locals;
