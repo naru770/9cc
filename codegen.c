@@ -11,6 +11,13 @@ void gen_lval(Node *node) {
 
 void gen(Node *node) {
   switch (node->kind) {
+  case ND_BLOCK:
+    for (Vector *cur = node->vector; cur->value != NULL; cur = cur->next) {
+      gen(cur->value);
+
+      printf("  pop rax\n");
+    }
+    return;
   case ND_RETURN:
     gen(node->lhs);
     printf("  pop rax\n");

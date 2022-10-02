@@ -43,15 +43,22 @@ void debug_tree() {
     fprintf(stderr, "\n");
   }
 
-  // for (int i = 0; code[i]; i++) {
-  //   print_node(code[i]);
-  //   fprintf(stderr, "\n");
-  // }
   fprintf(stderr, "\n");
 }
 
 
 void print_node(Node *node) {
+
+  if (node->kind == ND_BLOCK) {
+    fprintf(stderr, "{");
+    for (Vector *cur = node->vector; cur->value != NULL; cur = cur->next) {
+      print_node(cur->value);
+      break;
+    }
+    fprintf(stderr, "}");
+
+    return;
+  }
 
   if (node->lhs != NULL && node->rhs == NULL) {
     switch (node->kind) {
@@ -111,7 +118,7 @@ void print_node(Node *node) {
   default:
     fprintf(stderr, "err");
     break;
-  }  
+  }
 
   if (node->rhs != NULL)
     print_node(node->rhs);

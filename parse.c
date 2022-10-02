@@ -68,7 +68,7 @@ void expect(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len))
-    error("'%c'ではありません", op);
+    error("'%c'(%d)ではありません", op, op);
   token = token->next;
 }
 
@@ -116,7 +116,27 @@ void program() {
 Node *stmt() {
   Node *node;
 
-  if (consume_kind(TK_RETURN)) {
+  if (consume("{")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->rhs = NULL;
+    node->lhs = NULL;
+
+    Vector *head, *cur;
+    head = cur = calloc(1, sizeof(Vector));
+
+    while (!consume("}")) {
+      cur->value = stmt();
+      cur->next = calloc(1, sizeof(Vector));
+      cur = cur->next;
+    }
+    cur->value = NULL;
+    cur->next = NULL;
+
+    node->vector = head;
+
+    return node;
+  } else if (consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->rhs = NULL;

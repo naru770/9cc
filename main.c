@@ -3,7 +3,6 @@
 Token *token;
 char *user_input;
 Vector *code;
-// Node *code[100];
 LVar *locals;
 
 int main(int argc, char **argv) {
@@ -41,12 +40,6 @@ int main(int argc, char **argv) {
 
     printf("  pop rax\n");
   }
-  
-  // for (int i = 0; code[i]; i++) {
-  //   gen(code[i]);
-
-  //   printf("  pop rax\n");
-  // }
 
   // エピローグ
   printf("  mov rsp, rbp\n");

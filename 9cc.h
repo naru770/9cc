@@ -5,6 +5,11 @@
 #include <string.h>
 #include <stdbool.h>
 
+typedef struct Vector Vector;
+typedef struct Node Node;
+typedef struct Token Token;
+typedef struct LVar LVar;
+
 // 抽象構文木のノードの種類
 typedef enum {
   ND_ADD, // +
@@ -18,10 +23,10 @@ typedef enum {
   ND_NUM, // 整数
   ND_ASSIGN,  // =
   ND_LVAR,  // ローカル変数
-  ND_RETURN // return
+  ND_RETURN, // return
+  ND_BLOCK
 } NodeKind;
 
-typedef struct Node Node;
 
 // 抽象構文木のノードの型
 struct Node {
@@ -30,7 +35,9 @@ struct Node {
   Node *rhs;      // 右辺
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
+  Vector *vector; // kindがND_BLOCKの場合のみ使う
 };
+
 
 typedef enum {
   TK_RESERVED,
@@ -40,15 +47,12 @@ typedef enum {
   TK_EOF,
 } TokenKind;
 
-// ノード列
-typedef struct Vector Vector;
 
 struct Vector {
   Vector *next;
   Node *value;
 };
 
-typedef struct Token Token;
 
 struct Token {
   TokenKind kind; // トークンの型
@@ -58,7 +62,6 @@ struct Token {
   int len;        // トークンの長さ
 };
 
-typedef struct LVar LVar;
 
 // ローカル変数の型
 struct LVar {
@@ -104,7 +107,6 @@ void debug_tree();
 
 extern Token *token;
 extern char *user_input;
-// extern Node *code[100];
 extern Vector *code;
 
 extern LVar *locals;
