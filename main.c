@@ -4,25 +4,24 @@ Token *token;
 char *user_input;
 Vector *code;
 LVar *locals;
+int label_num;
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    fprintf(stderr, "引数の個数が正しくありません\n");
-    return 1;
-  }
 
   locals = NULL;
+  label_num = 0;
+  
+  user_input = read_file(argv[1]);
 
   // トークナイズする
-  user_input = argv[1];
   tokenize();
 
-  debug_token();
+  // debug_token();
   
   // 構文木生成
   program();
 
-  debug_tree();
+  // debug_tree();
 
   // アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");

@@ -16,22 +16,25 @@ assert() {
     fi
 }
 
-assert 0 "0;"
-assert 12 "12;"
-assert 21 "5+20-4;"
-assert 41 " 12 + 34 - 5; "
-assert 47 '5+6*7;'
-assert 15 '5*(9-6);'
-assert 4 '(3+5)/2;'
-assert 1 '(-3 * 2) + 7;'
-assert 0 '1 == 0;'
-assert 1 '123 != 6;'
-assert 0 '8 < 2;'
-assert 1 '29 <= 55;'
-assert 4 'a = 2; b = 4;'
-assert 11 'a = 9; b = a + 2;'
-assert 12 'foo = 10; bar = 2; r = foo + bar;'
-assert 20 'a = 10; b = 11; return a + b - 1;'
-assert 1 'f = 3; { g = 2; return f - g; }'
+# assert 13 'test/test1.c'
+# assert 11 'test/test2.c'
+# assert 1 'test/test_if1.c'
+# assert 0 'test/test_if2.c'
+# assert 11 'test/test_if3.c'
+# assert 21 'test/test_else1.c'
+# assert 21 'test/test_elseif1.c'
+# assert 55 'test/test_while1.c'
+# assert 55 'test/test_for1.c'
+# assert 55 'test/test_for2.c'
+# assert 11 'test/test_add_assign1.c'
+# assert 9 'test/test_sub_assign1.c'
+# assert 20 'test/test_mul_assign1.c'
+# assert 5 'test/test_div_assign1.c'
+# assert 11 'test/test_pre_inc1.c'
+# assert 21 'test/test_pre_inc2.c'
+# assert 9 'test/test_pre_dec1.c'
+# assert 1 'test/test_post_inc1.c'
+# assert 1 'test/test_post_dec1.c'
+assert 10 'test/test_func1.c'
 
 echo OK

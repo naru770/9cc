@@ -26,6 +26,18 @@ void debug_token() {
     case TK_RETURN:
       fprintf(stderr, "TK_RETURN:  return\n");
       break;
+    case TK_IF:
+      fprintf(stderr, "TK_IF:      if\n");
+      break;
+    case TK_ELSE:
+      fprintf(stderr, "TK_ELSE:    else\n");
+      break;
+    case TK_WHILE:
+      fprintf(stderr, "TK_WHILE:   while\n");
+      break;
+    case TK_FOR:
+      fprintf(stderr, "TKFOR:      for\n");
+      break;
     default:
       fprintf(stderr, "ERR:   %d\n", cur->kind);
     }
@@ -40,7 +52,7 @@ void debug_tree() {
   fprintf(stderr, "reproduce program from syntax tree:\n");
   for (Vector *cur = code; cur->value != NULL; cur = cur->next) {
     print_node(cur->value);
-    fprintf(stderr, "\n");
+    fprintf(stderr, ";\n");
   }
 
   fprintf(stderr, "\n");
@@ -48,12 +60,38 @@ void debug_tree() {
 
 
 void print_node(Node *node) {
+  if (node == NULL)
+    return;
+
+  if (node->kind == ND_FOR) {
+    fprintf(stderr,"for (");
+    print_node(node->init);
+    fprintf(stderr, ";");
+    print_node(node->cond);
+    fprintf(stderr, ";");
+    print_node(node->upd);
+    fprintf(stderr, ")");
+    print_node(node->lhs);
+  }
+  if (node->kind == ND_IF) {
+    fprintf(stderr, "if (");
+    print_node(node->cond);
+    fprintf(stderr, ")");
+    print_node(node->lhs);
+
+    if (node->rhs != NULL) {
+      fprintf(stderr, "else");
+      print_node(node->rhs);
+    }
+
+    return;
+  }
 
   if (node->kind == ND_BLOCK) {
     fprintf(stderr, "{");
     for (Vector *cur = node->vector; cur->value != NULL; cur = cur->next) {
       print_node(cur->value);
-      break;
+      fprintf(stderr, ";\n");
     }
     fprintf(stderr, "}");
 
@@ -110,10 +148,32 @@ void print_node(Node *node) {
     fprintf(stderr, "=");
     break;
   case ND_LVAR:
-   fprintf(stderr, "lval");
+    switch (node->inckind) {
+    case PRE_INC:
+      fprintf(stderr, "++lval");
+      break;
+    case PRE_DEC:
+      fprintf(stderr, "--lval");
+      break;
+    case POST_INC:
+      fprintf(stderr, "lval++");
+      break;
+    case POST_DEC:
+      fprintf(stderr, "lval--");
+      break;
+    default:
+      fprintf(stderr, "lval");
+      break;
+    }
     break;
   case ND_RETURN:
     fprintf(stderr, "return");
+    break;
+  case ND_IF:
+    fprintf(stderr, "if");
+    break;
+  case ND_WHILE:
+    fprintf(stderr, "while");
     break;
   default:
     fprintf(stderr, "err");

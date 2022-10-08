@@ -33,8 +33,17 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-// 次のトークンが期待している記号の時は、トークンを1つ読み進めて
-// 真を返す。それ以外の場合は偽を返す。
+// 次のトークンが期待した記号ならば真を返す
+bool foresee(char *op) {
+  if (token->kind != TK_RESERVED ||
+      strlen(op) != token->len ||
+      memcmp(token->str, op, token->len))
+    return false;
+  return true;
+}
+
+// 次のトークンが期待している記号の時は
+// トークンを1つ読み進めて真を返す
 bool consume(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
@@ -68,7 +77,7 @@ void expect(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len))
-    error("'%c'(%d)ではありません", op, op);
+    error("'%c'ではありません", *op);
   token = token->next;
 }
 
@@ -115,8 +124,59 @@ void program() {
 
 Node *stmt() {
   Node *node;
+  if (consume_kind(TK_FOR)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    expect("(");
 
-  if (consume("{")) {
+    // if init expression exists
+    if (!foresee(";"))
+      node->init = expr();
+    expect(";");
+
+    // if cond expression exists
+    if (!foresee(";"))
+      node->cond = expr();
+    expect(";");
+
+    // if update expression exsits
+    if (!foresee(")"))
+      node->upd = expr();
+    expect(")");
+
+    node->lhs = stmt();
+    node->rhs = NULL;
+    
+    return node;
+
+  } else if (consume_kind(TK_WHILE)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->lhs = stmt();
+    node->rhs = NULL;
+
+    return node;
+
+  } else if (consume_kind(TK_IF)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->lhs = stmt();
+
+    if (consume_kind(TK_ELSE)) {
+      node->rhs = stmt();
+    } else {
+      node->rhs = NULL;
+    }
+
+    return node;
+
+  } else if (consume("{")) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_BLOCK;
     node->rhs = NULL;
@@ -136,28 +196,47 @@ Node *stmt() {
     node->vector = head;
 
     return node;
+
   } else if (consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->rhs = NULL;
     node->lhs = expr();
+
   } else {
     node = expr();
   }
+
+  fprintf(stderr, "===== debug =====\n");
+  fprintf(stderr, "%s\n", token->str);
+  fprintf(stderr, "=================\n\n");
 
   expect(";");
   return node;
 }
 
-Node *assign() {
-  Node *node = equality();
-  if (consume("="))
-    node = new_node(ND_ASSIGN, node, assign());
-  return node;
-}
-
 Node *expr() {
   return assign();
+}
+
+Node *assign() {
+  Node *node = equality();
+
+  if (consume("+=")) {
+    Node *add_node = new_node(ND_ADD, node, assign());
+    node = new_node(ND_ASSIGN, node, add_node);
+  } else if (consume("-=")) {
+    Node *add_node = new_node(ND_SUB, node, assign());
+    node = new_node(ND_ASSIGN, node, add_node);
+  } else if (consume("*=")) {
+    Node *add_node = new_node(ND_MUL, node, assign());
+    node = new_node(ND_ASSIGN, node, add_node);
+  } else if (consume("/=")) {
+    Node *add_node = new_node(ND_DIV, node, assign());
+    node = new_node(ND_ASSIGN, node, add_node);
+  } else if (consume("="))
+    node = new_node(ND_ASSIGN, node, assign());
+  return node;
 }
 
 Node *equality() {
@@ -218,10 +297,33 @@ Node *mul() {
 
 Node *unary() {
   if (consume("+"))
-    return primary();
+    return inc();
   if (consume("-"))
-    return new_node(ND_SUB, new_node_num(0), primary());
-  return primary();
+    return new_node(ND_SUB, new_node_num(0), inc());
+  return inc();
+}
+
+Node *inc() {
+  Node *node;
+
+  if (consume("++")) {
+    node = primary();
+    node->inckind = PRE_INC;
+  } else if (consume("--")) {
+    node = primary();
+    node->inckind = PRE_DEC;
+  } else {
+    node = primary();
+
+    if (consume("++"))
+      node->inckind = POST_INC;
+    else if (consume("--"))
+      node->inckind = POST_DEC;
+    else
+      node->inckind = NO_INC;
+  }
+
+  return node;
 }
 
 Node *primary() {
@@ -234,23 +336,72 @@ Node *primary() {
 
   Token *tok = consume_ident();
   if (tok) {
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_LVAR;
-    LVar *lvar = find_lvar(tok);
+    if (consume("(")) {
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_FUNC;
+      LVar *lvar = find_lvar(tok);
 
-    // 変数リストになければ追加
-    if (lvar) {
-      node->offset = lvar->offset;
+      // 変数リストになければ追加
+      if (lvar) {
+        node->offset = lvar->offset;
+        node->name = lvar->name;
+        node->len = lvar->len;
+        node->argc = 0;
+      } else {
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->len = tok->len;
+        lvar->name = tok->str;
+        lvar->offset = (locals) ? locals->offset + 8 : 8;
+        lvar->is_func = true;
+        locals = lvar;
+        node->offset = lvar->offset;
+        node->name = lvar->name;
+        node->len = lvar->len;
+        node->argc = 0;
+      }
+
+      if (consume(")")) {
+        return node;
+      } else {
+        node->vector = calloc(1, sizeof(Vector));
+        Vector *cur = node->vector;
+        for (;;) {
+          cur->value = expr();
+          node->argc++;
+
+          if (consume(",")) {
+            cur->next = calloc(1, sizeof(Vector));
+            cur = cur->next;
+            continue;
+          } else if(consume(")")) {
+            cur->next = NULL;
+            break;
+          }
+        }
+        return node;
+      }
+
     } else {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals;
-      lvar->len = tok->len;
-      lvar->name = tok->str;
-      lvar->offset = (locals) ? locals->offset + 8 : 8;
-      node->offset = lvar->offset;
-      locals = lvar;
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_LVAR;
+      LVar *lvar = find_lvar(tok);
+
+      // 変数リストになければ追加
+      if (lvar) {
+        node->offset = lvar->offset;
+      } else {
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->len = tok->len;
+        lvar->name = tok->str;
+        lvar->offset = (locals) ? locals->offset + 8 : 8;
+        lvar->is_func = false;
+        node->offset = lvar->offset;
+        locals = lvar;
+      }
+      return node;
     }
-    return node;
   }
 
   // そうでなければ数値のはず

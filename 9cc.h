@@ -12,36 +12,58 @@ typedef struct LVar LVar;
 
 // 抽象構文木のノードの種類
 typedef enum {
-  ND_ADD, // +
-  ND_SUB, // -
-  ND_MUL, // *
-  ND_DIV, // /
-  ND_EQ,  // ==
-  ND_NEQ, // !=
-  ND_LT,  // <
-  ND_LTE, // <=
-  ND_NUM, // 整数
+  ND_ADD,     // +
+  ND_SUB,     // -
+  ND_MUL,     // *
+  ND_DIV,     // /
+  ND_EQ,      // ==
+  ND_NEQ,     // !=
+  ND_LT,      // <
+  ND_LTE,     // <=
+  ND_NUM,     // 整数
   ND_ASSIGN,  // =
-  ND_LVAR,  // ローカル変数
-  ND_RETURN, // return
-  ND_BLOCK
+  ND_LVAR,    // ローカル変数
+  ND_RETURN,  // return
+  ND_BLOCK,   // { * }
+  ND_IF,
+  ND_FOR,
+  ND_WHILE,
+  ND_FUNC
 } NodeKind;
 
+typedef enum {
+  NO_INC,
+  PRE_INC,
+  PRE_DEC,
+  POST_INC,
+  POST_DEC
+} IncKind;
 
 // 抽象構文木のノードの型
 struct Node {
   NodeKind kind;  // ノードの型
   Node *lhs;      // 左辺
   Node *rhs;      // 右辺
+  Node *cond;     // if, while, forで使う
+  Node *init;     // forで使う
+  Node *upd;      // forで使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
   Vector *vector; // kindがND_BLOCKの場合のみ使う
+  IncKind inckind;// インクリメントの種類
+  char *name;     // 関数名
+  int len;        // 関数名の長さ
+  int argc;       // 関数の引数の個数
 };
 
 
 typedef enum {
   TK_RESERVED,
   TK_RETURN,
+  TK_IF,
+  TK_ELSE,
+  TK_FOR,
+  TK_WHILE,
   TK_IDENT,
   TK_NUM,
   TK_EOF,
@@ -69,6 +91,7 @@ struct LVar {
   char *name;
   int len;
   int offset;
+  bool is_func;   // 関数か変数か
 };
 
 // tokenize.c
@@ -94,6 +117,7 @@ Node *relational();
 Node *add();
 Node *mul();
 Node *unary();
+Node *inc();
 Node *primary();
 
 // codegen.c
@@ -105,8 +129,11 @@ void debug_token();
 void print_node();
 void debug_tree();
 
+// io.c
+char *read_file(char *path);
+
 extern Token *token;
 extern char *user_input;
 extern Vector *code;
-
 extern LVar *locals;
+extern int label_num;
