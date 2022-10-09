@@ -80,7 +80,7 @@ void print_node(Node *node) {
     print_node(node->lhs);
 
     if (node->rhs != NULL) {
-      fprintf(stderr, "else");
+      fprintf(stderr, "else ");
       print_node(node->rhs);
     }
 

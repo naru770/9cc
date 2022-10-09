@@ -1,5 +1,5 @@
 #include <stdio.h>
 
-int foo(int x, int y) {
+int print(int x) {
     printf("%d\n", x + y);
 }

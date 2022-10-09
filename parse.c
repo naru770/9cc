@@ -76,8 +76,15 @@ Token *consume_ident() {
 void expect(char *op) {
   if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
-      memcmp(token->str, op, token->len))
-    error("'%c'ではありません", *op);
+      memcmp(token->str, op, token->len)) {
+    int eol_cnt = 0;
+    for (char *p = user_input; p <= token->str; p++) {
+      if (*p == '\n')
+        eol_cnt++;
+    }
+
+    error("line %d: '%c'ではありません", eol_cnt, *op);
+  }
   token = token->next;
 }
 
@@ -114,7 +121,68 @@ void program() {
   Vector *cur = code = calloc(1, sizeof(Vector));
 
   while (!at_eof()) {
-    cur->value = stmt();
+
+    Node *node = calloc(1, sizeof(Node));
+
+    Token *tk = consume_ident();
+
+    if (tk == NULL) {
+      fprintf(stderr,"Every statement should be in a function\n");
+      exit(1);
+    }
+
+    node->name = tk->str;
+    node->len = tk->len;
+
+    GVar *gval = calloc(1, sizeof(GVar));
+    gval->next = globals;
+    gval->name = tk->str;
+    gval->len = tk->len;
+
+    globals = gval;
+
+    expect("(");
+
+    locals = calloc(1, sizeof(LVar));
+    
+    if (consume(")")) {
+      node->vector = calloc(1, sizeof(Vector));
+    } else {
+      node->vector = calloc(1, sizeof(Vector));
+      Vector *cur = node->vector;
+      for (;;) {
+        Token *tk = consume_ident();
+
+        LVar *lvar = calloc(1, sizeof(LVar));
+        lvar->name = tk->str;
+        lvar->len = tk->len;
+        lvar->offset = locals->offset + 8;
+        lvar->next = locals;
+        locals = lvar;
+        
+        node->argc++;
+
+        if (consume(",")) {
+          cur->next = calloc(1, sizeof(Vector));
+          cur = cur->next;
+          continue;
+        } else if(consume(")")) {
+          cur->next = NULL;
+          break;
+        }
+      }
+    }
+    
+    if (foresee("{")) {
+      node->lhs = stmt();
+    } else {
+      fprintf(stderr, "expected '{', but got wrong character.");
+      exit(1);
+    }
+    
+    globals->locals = locals;
+    
+    cur->value = node;
     cur->next = calloc(1, sizeof(Vector));
     cur = cur->next;
   }
@@ -207,9 +275,9 @@ Node *stmt() {
     node = expr();
   }
 
-  fprintf(stderr, "===== debug =====\n");
-  fprintf(stderr, "%s\n", token->str);
-  fprintf(stderr, "=================\n\n");
+  // fprintf(stderr, "===== debug =====\n");
+  // fprintf(stderr, "%s\n", token->str);
+  // fprintf(stderr, "=================\n\n");
 
   expect(";");
   return node;
@@ -346,19 +414,17 @@ Node *primary() {
         node->offset = lvar->offset;
         node->name = lvar->name;
         node->len = lvar->len;
-        node->argc = 0;
       } else {
         lvar = calloc(1, sizeof(LVar));
         lvar->next = locals;
         lvar->len = tok->len;
         lvar->name = tok->str;
-        lvar->offset = (locals) ? locals->offset + 8 : 8;
+        lvar->offset = locals->offset + 8;
         lvar->is_func = true;
         locals = lvar;
         node->offset = lvar->offset;
         node->name = lvar->name;
         node->len = lvar->len;
-        node->argc = 0;
       }
 
       if (consume(")")) {
@@ -395,7 +461,7 @@ Node *primary() {
         lvar->next = locals;
         lvar->len = tok->len;
         lvar->name = tok->str;
-        lvar->offset = (locals) ? locals->offset + 8 : 8;
+        lvar->offset = locals->offset + 8;
         lvar->is_func = false;
         node->offset = lvar->offset;
         locals = lvar;

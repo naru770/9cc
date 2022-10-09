@@ -1,8 +1,10 @@
-a = 0;
-i = 1;
+main() {
+    a = 0;
+    i = 1;
 
-for (; i <= 10; i = i + 1) {
-    a = a + i;
+    for (; i <= 10; i = i + 1) {
+        a = a + i;
+    }
+
+    return a;
 }
-
-return a;

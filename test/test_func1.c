@@ -1,1 +1,3 @@
-foo(3, 4);
+main() {
+    return 1;
+}

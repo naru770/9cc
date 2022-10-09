@@ -2,11 +2,41 @@
 
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
-    error("代入の左辺値が変数ではありません");
+    error("Assigned lvalue is not a variable.");
   
   printf("  mov rax, rbp\n");
   printf("  sub rax, %d\n", node->offset);
   printf("  push rax\n");
+}
+
+void gen_global(Node *node) {
+  if (node == NULL)
+    return;
+  // ラベル出力
+  for (int i = 0; i < node->len; i++)
+    putchar(*(node->name + i));
+  printf(":\n");
+  
+  // プロローグ
+  // 変数26個分の領域を確保する
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, 208\n");
+
+  if (node->argc >= 1)
+    printf("  mov [rbp - 8], rdi\n");
+  if (node->argc >= 2)
+    printf("  mov [rbp - 16], rsi\n");
+  if (node->argc >= 3)
+    printf("  mov [rbp - 24], rdx\n");
+  if (node->argc >= 4)
+    printf("  mov [rbp - 32], rcx\n");
+  if (node->argc >= 5)
+    printf("  mov [rbp - 40], r8\n");
+  if (node->argc >= 6)
+    printf("  mov [rbp - 48], r9\n");
+
+  gen(node->lhs);
 }
 
 void gen(Node *node) {
@@ -81,6 +111,7 @@ void gen(Node *node) {
 
   case ND_RETURN:
     gen(node->lhs);
+    // エピローグ
     printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
@@ -128,17 +159,8 @@ void gen(Node *node) {
     printf("  mov [rax], rdi\n");
     printf("  push rdi\n");
     return;
-  }
 
-  gen(node->lhs);
-  gen(node->rhs);
-
-  printf("  pop rdi\n");
-  printf("  pop rax\n");
-
-  switch (node->kind) {
   case ND_FUNC:
-
     // 引数があれば
     if (node->vector != NULL) {
       for (Vector *cur = node->vector; cur != NULL; cur = cur->next) {
@@ -152,21 +174,36 @@ void gen(Node *node) {
         else if (i == 2)
           printf("  pop rdx\n");
         else if (i == 3)
-          printf("  pop r10\n");
-        else if (i == 3)
+          printf("  pop rcx\n");
+        else if (i == 4)
           printf("  pop r8\n");
-        else
+        else if (i == 5)
           printf("  pop r9\n");
+        else {
+          fprintf(stderr, "the number of args is more than 6\n");
+          exit(1);
+        }
       }
     }
 
     // 関数呼び出し
     printf("  call ");
     for (int i = 0; i < node->len; i++)
-      printf("%c", *(node->name + i));
+      putchar(*(node->name + i));
     printf("\n");
+    
+    printf("  push rax\n");
 
-    break;
+    return;
+  }
+
+  gen(node->lhs);
+  gen(node->rhs);
+
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+
+  switch (node->kind) {
   case ND_ADD:
     printf("  add rax, rdi\n");
     break;

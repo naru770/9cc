@@ -1,4 +1,6 @@
-i = 10;
-++i;
+main() {
+    i = 10;
+    ++i;
 
-return i;
+    return i;
+}

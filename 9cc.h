@@ -9,6 +9,7 @@ typedef struct Vector Vector;
 typedef struct Node Node;
 typedef struct Token Token;
 typedef struct LVar LVar;
+typedef struct GVar GVar;
 
 // 抽象構文木のノードの種類
 typedef enum {
@@ -49,7 +50,7 @@ struct Node {
   Node *upd;      // forで使う
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
-  Vector *vector; // kindがND_BLOCKの場合のみ使う
+  Vector *vector; // kindがND_BLOCKかND_FUNCの場合のみ使う
   IncKind inckind;// インクリメントの種類
   char *name;     // 関数名
   int len;        // 関数名の長さ
@@ -84,6 +85,12 @@ struct Token {
   int len;        // トークンの長さ
 };
 
+struct GVar {
+  GVar *next;
+  LVar *locals;     // 関数が持つローカル変数
+  char *name;     // 関数名
+  int len;        // 関数名の長さ
+};
 
 // ローカル変数の型
 struct LVar {
@@ -122,6 +129,7 @@ Node *primary();
 
 // codegen.c
 void gen_lval(Node *node);
+void gen_global(Node *node);
 void gen(Node *);
 
 // debug.c
@@ -136,4 +144,5 @@ extern Token *token;
 extern char *user_input;
 extern Vector *code;
 extern LVar *locals;
+extern GVar *globals;
 extern int label_num;
