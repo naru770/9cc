@@ -368,6 +368,10 @@ Node *unary() {
     return inc();
   if (consume("-"))
     return new_node(ND_SUB, new_node_num(0), inc());
+  if (consume("&")) 
+    return new_node(ND_REF, inc(), NULL);
+  if (consume("*"))
+    return new_node(ND_DEREF, inc(), NULL);
   return inc();
 }
 

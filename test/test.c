@@ -8,5 +8,8 @@ foo(n) {
 }
 
 main() {
-    return foo(10);
+    test(foo(10), 55);
+
+        
+    return 0;
 }

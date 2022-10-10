@@ -29,7 +29,9 @@ typedef enum {
   ND_IF,
   ND_FOR,
   ND_WHILE,
-  ND_FUNC
+  ND_FUNC,
+  ND_REF,     // &
+  ND_DEREF    // *
 } NodeKind;
 
 typedef enum {
