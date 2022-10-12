@@ -67,20 +67,18 @@ int main(int argc, char **argv) {
   // トークナイズする
   tokenize();
 
-  // debug_token();
   fprintf(stderr, "1: tokenize pass\n");
   
   // 構文木生成
   program();
 
-  // debug_tree();
   fprintf(stderr, "2: parse pass\n");
 
   // アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
   printf(".globl main\n");
 
-  for (Vector *cur = code; cur->value != NULL; cur = cur->next) {
+  for (Vector *cur = code; cur->next != NULL; cur = cur->next) {
     gen_global(cur->value);
   }
 

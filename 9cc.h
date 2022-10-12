@@ -30,8 +30,9 @@ typedef enum {
   ND_FOR,
   ND_WHILE,
   ND_FUNC,
-  ND_REF,     // &
-  ND_DEREF    // *
+  ND_ADDR,    // &
+  ND_DEREF,   // *
+  ND_DEC      // 宣言
 } NodeKind;
 
 typedef enum {
@@ -57,6 +58,7 @@ struct Node {
   char *name;     // 関数名
   int len;        // 関数名の長さ
   int argc;       // 関数の引数の個数
+  bool is_declaration;  // ND_ASSIGNで使う
 };
 
 
@@ -70,13 +72,8 @@ typedef enum {
   TK_IDENT,
   TK_NUM,
   TK_EOF,
+  TK_TYPE
 } TokenKind;
-
-
-struct Vector {
-  Vector *next;
-  Node *value;
-};
 
 
 struct Token {
@@ -86,6 +83,13 @@ struct Token {
   char *str;      // トークン文字列
   int len;        // トークンの長さ
 };
+
+
+struct Vector {
+  Vector *next;
+  Node *value;
+};
+
 
 struct GVar {
   GVar *next;
@@ -133,11 +137,6 @@ Node *primary();
 void gen_lval(Node *node);
 void gen_global(Node *node);
 void gen(Node *);
-
-// debug.c
-void debug_token();
-void print_node();
-void debug_tree();
 
 // io.c
 char *read_file(char *path);

@@ -124,20 +124,22 @@ void program() {
 
     Node *node = calloc(1, sizeof(Node));
 
-    Token *tk = consume_ident();
+    // 宣言子が無ければエラー
+    if (!consume_kind(TK_TYPE))
+      error("Declaration was expected\n");
 
-    if (tk == NULL) {
-      fprintf(stderr,"Every statement should be in a function\n");
-      exit(1);
-    }
+    Token *tok = consume_ident();
 
-    node->name = tk->str;
-    node->len = tk->len;
+    if (tok == NULL)
+      error("Every statement should be in a function\n");
+
+    node->name = tok->str;
+    node->len = tok->len;
 
     GVar *gval = calloc(1, sizeof(GVar));
     gval->next = globals;
-    gval->name = tk->str;
-    gval->len = tk->len;
+    gval->name = tok->str;
+    gval->len = tok->len;
 
     globals = gval;
 
@@ -151,6 +153,9 @@ void program() {
       node->vector = calloc(1, sizeof(Vector));
       Vector *cur = node->vector;
       for (;;) {
+        if (!consume_kind(TK_TYPE))
+          error("Declaration was expected");
+
         Token *tk = consume_ident();
 
         LVar *lvar = calloc(1, sizeof(LVar));
@@ -173,12 +178,10 @@ void program() {
       }
     }
     
-    if (foresee("{")) {
+    if (foresee("{"))
       node->lhs = stmt();
-    } else {
-      fprintf(stderr, "expected '{', but got wrong character.");
-      exit(1);
-    }
+    else
+      error("Expected '{'.");
     
     globals->locals = locals;
     
@@ -192,7 +195,37 @@ void program() {
 
 Node *stmt() {
   Node *node;
-  if (consume_kind(TK_FOR)) {
+
+  // 変数宣言
+  if (consume_kind(TK_TYPE)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_ASSIGN;
+    node->is_declaration = true;
+
+    Token *tok = consume_ident();
+
+    if (!tok)
+      error("Ident was expected");
+
+    if (find_lvar(tok))
+      error("This variable is already declared");
+    
+    // 変数リストに追加
+    LVar *lvar = calloc(1, sizeof(LVar));
+    lvar->next = locals;
+    lvar->len = tok->len;
+    lvar->name = tok->str;
+    lvar->offset = locals->offset + 8;
+    locals = lvar;
+    node->offset = lvar->offset;
+    node->name = lvar->name;
+    node->len = lvar->len;
+
+    expect(";");
+
+    return NULL;
+
+  } else if (consume_kind(TK_FOR)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_FOR;
     expect("(");
@@ -369,7 +402,7 @@ Node *unary() {
   if (consume("-"))
     return new_node(ND_SUB, new_node_num(0), inc());
   if (consume("&")) 
-    return new_node(ND_REF, inc(), NULL);
+    return new_node(ND_ADDR, inc(), NULL);
   if (consume("*"))
     return new_node(ND_DEREF, inc(), NULL);
   return inc();
@@ -408,28 +441,12 @@ Node *primary() {
 
   Token *tok = consume_ident();
   if (tok) {
+    // 変数呼び出し
     if (consume("(")) {
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_FUNC;
-      LVar *lvar = find_lvar(tok);
-
-      // 変数リストになければ追加
-      if (lvar) {
-        node->offset = lvar->offset;
-        node->name = lvar->name;
-        node->len = lvar->len;
-      } else {
-        lvar = calloc(1, sizeof(LVar));
-        lvar->next = locals;
-        lvar->len = tok->len;
-        lvar->name = tok->str;
-        lvar->offset = locals->offset + 8;
-        lvar->is_func = true;
-        locals = lvar;
-        node->offset = lvar->offset;
-        node->name = lvar->name;
-        node->len = lvar->len;
-      }
+      node->name = tok->str;
+      node->len = tok->len;
 
       if (consume(")")) {
         return node;
@@ -452,24 +469,17 @@ Node *primary() {
         return node;
       }
 
+    // 変数
     } else {
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_LVAR;
       LVar *lvar = find_lvar(tok);
 
-      // 変数リストになければ追加
-      if (lvar) {
-        node->offset = lvar->offset;
-      } else {
-        lvar = calloc(1, sizeof(LVar));
-        lvar->next = locals;
-        lvar->len = tok->len;
-        lvar->name = tok->str;
-        lvar->offset = locals->offset + 8;
-        lvar->is_func = false;
-        node->offset = lvar->offset;
-        locals = lvar;
-      }
+      // 変数リストになければエラー
+      if (!lvar)
+        error("This variable was not declared yet");
+      
+      node->offset = lvar->offset;
       return node;
     }
   }

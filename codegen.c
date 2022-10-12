@@ -101,7 +101,7 @@ void gen(Node *node) {
     return;
 
   case ND_BLOCK:
-    for (Vector *cur = node->vector; cur->value != NULL; cur = cur->next) {
+    for (Vector *cur = node->vector; cur->next != NULL; cur = cur->next) {
       gen(cur->value);
 
       printf("  pop rax\n");
@@ -149,7 +149,7 @@ void gen(Node *node) {
 
     return;
   
-  case ND_REF:
+  case ND_ADDR:
     gen_lval(node->lhs);  // 子ノードは左辺値1つのみ
     return;
   
