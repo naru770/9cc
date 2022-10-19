@@ -17,8 +17,10 @@ int main() {
     assert(sum(1, 2, 3, 4, 5, 6), 21);
 
     int a;
+    int b;
     a = 99;
-    assert(a, 99);
+    b = 10;
+    assert(a + b, 109);
         
     return 0;
 }

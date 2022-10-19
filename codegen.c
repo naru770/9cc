@@ -102,8 +102,11 @@ void gen(Node *node) {
 
   case ND_BLOCK:
     for (Vector *cur = node->vector; cur->next != NULL; cur = cur->next) {
+      if (cur->value == NULL)
+        continue;
+      
       gen(cur->value);
-
+      
       printf("  pop rax\n");
     }
     return;
@@ -206,6 +209,8 @@ void gen(Node *node) {
 
     return;
   }
+
+  // 演算
 
   gen(node->lhs);
   gen(node->rhs);
