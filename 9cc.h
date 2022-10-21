@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef struct Vector Vector;
 typedef struct Node Node;
 typedef struct Token Token;
 typedef struct LVar LVar;
@@ -46,14 +45,15 @@ typedef enum {
 // 抽象構文木のノードの型
 struct Node {
   NodeKind kind;  // ノードの型
-  Node *lhs;      // 左辺
+  Node *lhs;      // 左辺, block内のstatementのベクタ
   Node *rhs;      // 右辺
   Node *cond;     // if, while, forで使う
   Node *init;     // forで使う
   Node *upd;      // forで使う
+  Node *next;     // kindがND_BLOCKかND_FUNCの場合のみ使う
+  Node *argv;     // 関数の引数のベクタ
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
-  Vector *vector; // kindがND_BLOCKかND_FUNCの場合のみ使う
   IncKind inckind;// インクリメントの種類
   char *name;     // 関数名
   int len;        // 関数名の長さ
@@ -82,12 +82,6 @@ struct Token {
   int val;        // kindがTK_NUMの場合、その数値
   char *str;      // トークン文字列
   int len;        // トークンの長さ
-};
-
-
-struct Vector {
-  Vector *next;
-  Node *value;
 };
 
 
@@ -135,7 +129,7 @@ Node *primary();
 
 // codegen.c
 void gen_lval(Node *node);
-void gen_global(Node *node);
+void gen_global();
 void gen(Node *);
 
 // io.c
@@ -143,7 +137,6 @@ char *read_file(char *path);
 
 extern Token *token;
 extern char *user_input;
-extern Vector *code;
 extern LVar *locals;
-extern GVar *globals;
 extern int label_num;
+extern Node *code;

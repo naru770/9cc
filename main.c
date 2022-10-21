@@ -2,25 +2,15 @@
 
 Token *token;
 char *user_input;
-Vector *code;
+Node *code;
 LVar *locals;
 GVar *globals;
 int label_num;
 
-void free_vector(Vector *vector);
 void free_node(Node *node);
 void free_locals(LVar *lvar);
 void free_globals(GVar *gvar);
 void free_all();
-
-void free_vector(Vector *vector) {
-  if (vector == NULL)
-    return;
-  
-  free_vector(vector->next);
-  free_node(vector->value);
-  free(vector);
-}
 
 void free_node(Node *node) {
   if (node == NULL)
@@ -31,7 +21,8 @@ void free_node(Node *node) {
   free_node(node->cond);
   free_node(node->init);
   free_node(node->upd);
-  free_vector(node->vector);
+  free_node(node->next);
+  free_node(node->argv);
   free(node);
 }
 
@@ -52,10 +43,6 @@ void free_globals(GVar *gvar) {
   free(gvar);
 }
 
-void free_all() {
-  free(user_input);
-  free_vector(code);
-}
 
 int main(int argc, char **argv) {
 
@@ -78,9 +65,7 @@ int main(int argc, char **argv) {
   printf(".intel_syntax noprefix\n");
   printf(".globl main\n");
 
-  for (Vector *cur = code; cur->next != NULL; cur = cur->next) {
-    gen_global(cur->value);
-  }
+  gen_global();
 
   fprintf(stderr, "3: codegen pass\n");
 

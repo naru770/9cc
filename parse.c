@@ -118,11 +118,15 @@ Node *new_node_num(int val) {
 }
 
 void program() {
-  Vector *cur = code = calloc(1, sizeof(Vector));
+  Node *head, *cur;
+  head = cur = calloc(1, sizeof(Node));
 
   while (!at_eof()) {
 
+    // 関数ノード
     Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FUNC;
+    node->is_declaration = true;
 
     // 宣言子が無ければエラー
     if (!consume_kind(TK_TYPE))
@@ -136,22 +140,13 @@ void program() {
     node->name = tok->str;
     node->len = tok->len;
 
-    GVar *gval = calloc(1, sizeof(GVar));
-    gval->next = globals;
-    gval->name = tok->str;
-    gval->len = tok->len;
-
-    globals = gval;
-
     expect("(");
 
     locals = calloc(1, sizeof(LVar));
     
     if (consume(")")) {
-      node->vector = calloc(1, sizeof(Vector));
+      node->argv = NULL;
     } else {
-      node->vector = calloc(1, sizeof(Vector));
-      Vector *cur = node->vector;
       for (;;) {
         if (!consume_kind(TK_TYPE))
           error("Declaration was expected");
@@ -168,12 +163,11 @@ void program() {
         node->argc++;
 
         if (consume(",")) {
-          cur->next = calloc(1, sizeof(Vector));
-          cur = cur->next;
           continue;
         } else if(consume(")")) {
-          cur->next = NULL;
           break;
+        } else {
+          error("Something went wrong with argument");
         }
       }
     }
@@ -181,16 +175,15 @@ void program() {
     if (foresee("{"))
       node->lhs = stmt();
     else
-      error("Expected '{'.");
+      error("Expected '{'");
     
-    globals->locals = locals;
-    
-    cur->value = node;
-    cur->next = calloc(1, sizeof(Vector));
+    cur->next = node;
     cur = cur->next;
   }
-  cur->value = NULL;
+  
   cur->next = NULL;
+  
+  code = head->next;
 }
 
 Node *stmt() {
@@ -221,9 +214,14 @@ Node *stmt() {
     node->name = lvar->name;
     node->len = lvar->len;
 
+    // fprintf(stderr, "===== debug =====\n");
+    // fprintf(stderr, "%s\n", token->str);
+    // fprintf(stderr, "=================\n\n");
+
     expect(";");
 
     return NULL;
+
 
   } else if (consume_kind(TK_FOR)) {
     node = calloc(1, sizeof(Node));
@@ -250,6 +248,7 @@ Node *stmt() {
     
     return node;
 
+
   } else if (consume_kind(TK_WHILE)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_WHILE;
@@ -260,6 +259,7 @@ Node *stmt() {
     node->rhs = NULL;
 
     return node;
+
 
   } else if (consume_kind(TK_IF)) {
     node = calloc(1, sizeof(Node));
@@ -277,24 +277,28 @@ Node *stmt() {
 
     return node;
 
+
+  // BLOCK
   } else if (consume("{")) {
-    node = calloc(1, sizeof(Node));
+    node = calloc(1, sizeof(Node)); 
     node->kind = ND_BLOCK;
     node->rhs = NULL;
     node->lhs = NULL;
 
-    Vector *head, *cur;
-    head = cur = calloc(1, sizeof(Vector));
+    if (consume("}"))
+      return node;
+    
+    // ブロック内のstatementのノード列をベクタとして取得
+    Node *head, *cur;
+    head = cur = calloc(1, sizeof(Node));
 
     while (!consume("}")) {
-      cur->value = stmt();
-      cur->next = calloc(1, sizeof(Vector));
-      cur = cur->next;
+      cur->next = stmt();
+      if (cur->next != NULL)
+        cur = cur->next;
     }
-    cur->value = NULL;
-    cur->next = NULL;
 
-    node->vector = head;
+    node->lhs = head->next;
 
     return node;
 
@@ -326,17 +330,23 @@ Node *assign() {
   if (consume("+=")) {
     Node *add_node = new_node(ND_ADD, node, assign());
     node = new_node(ND_ASSIGN, node, add_node);
+
   } else if (consume("-=")) {
     Node *add_node = new_node(ND_SUB, node, assign());
     node = new_node(ND_ASSIGN, node, add_node);
+
   } else if (consume("*=")) {
     Node *add_node = new_node(ND_MUL, node, assign());
     node = new_node(ND_ASSIGN, node, add_node);
+
   } else if (consume("/=")) {
     Node *add_node = new_node(ND_DIV, node, assign());
     node = new_node(ND_ASSIGN, node, add_node);
-  } else if (consume("="))
+
+  } else if (consume("=")) {
     node = new_node(ND_ASSIGN, node, assign());
+
+  }
   return node;
 }
 
@@ -441,7 +451,7 @@ Node *primary() {
 
   Token *tok = consume_ident();
   if (tok) {
-    // 変数呼び出し
+    // 関数呼び出し
     if (consume("(")) {
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_FUNC;
@@ -451,21 +461,23 @@ Node *primary() {
       if (consume(")")) {
         return node;
       } else {
-        node->vector = calloc(1, sizeof(Vector));
-        Vector *cur = node->vector;
+        Node *head, *cur;
+        head = cur = calloc(1, sizeof(Node));
+        
         for (;;) {
-          cur->value = expr();
+          cur->next = expr();
+          cur = cur->next;
           node->argc++;
 
           if (consume(",")) {
-            cur->next = calloc(1, sizeof(Vector));
-            cur = cur->next;
             continue;
-          } else if(consume(")")) {
+          } else if (consume(")")) {
             cur->next = NULL;
             break;
           }
         }
+
+        node->argv = head->next;
         return node;
       }
 

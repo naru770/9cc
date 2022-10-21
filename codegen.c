@@ -8,34 +8,39 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
-void gen_global(Node *node) {
-  if (node == NULL)
+void gen_global() {
+  if (code == NULL)
     return;
-  // ラベル出力
-  for (int i = 0; i < node->len; i++)
-    putchar(*(node->name + i));
-  printf(":\n");
   
-  // プロローグ
-  // 変数26個分の領域を確保する
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
+  for (Node *cur = code; cur != NULL; cur = cur->next) {
+    // ラベル出力
+    for (int i = 0; i < cur->len; i++)
+      putchar(*(cur->name + i));
+    printf(":\n");
+    
+    // プロローグ
+    // 変数26個分の領域を確保する
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, 208\n");
 
-  if (node->argc >= 1)
-    printf("  mov [rbp - 8], rdi\n");
-  if (node->argc >= 2)
-    printf("  mov [rbp - 16], rsi\n");
-  if (node->argc >= 3)
-    printf("  mov [rbp - 24], rdx\n");
-  if (node->argc >= 4)
-    printf("  mov [rbp - 32], rcx\n");
-  if (node->argc >= 5)
-    printf("  mov [rbp - 40], r8\n");
-  if (node->argc >= 6)
-    printf("  mov [rbp - 48], r9\n");
+    if (cur->argc >= 1)
+      printf("  mov [rbp - 8], rdi\n");
+    if (cur->argc >= 2)
+      printf("  mov [rbp - 16], rsi\n");
+    if (cur->argc >= 3)
+      printf("  mov [rbp - 24], rdx\n");
+    if (cur->argc >= 4)
+      printf("  mov [rbp - 32], rcx\n");
+    if (cur->argc >= 5)
+      printf("  mov [rbp - 40], r8\n");
+    if (cur->argc >= 6)
+      printf("  mov [rbp - 48], r9\n");
 
-  gen(node->lhs);
+    gen(cur->lhs);
+  }
+
+
 }
 
 void gen(Node *node) {
@@ -74,6 +79,7 @@ void gen(Node *node) {
       gen(node->lhs);
       printf("  jmp .Lbegin%d\n", begin_num);
       printf(".Lend%d:\n", end_num);
+
       return;
     }
 
@@ -101,14 +107,11 @@ void gen(Node *node) {
     return;
 
   case ND_BLOCK:
-    for (Vector *cur = node->vector; cur->next != NULL; cur = cur->next) {
-      if (cur->value == NULL)
-        continue;
-      
-      gen(cur->value);
-      
+    for (Node *cur = node->lhs; cur != NULL; cur = cur->next) {
+      gen(cur);
       printf("  pop rax\n");
     }
+    
     return;
 
   case ND_RETURN:
@@ -175,9 +178,9 @@ void gen(Node *node) {
 
   case ND_FUNC:
     // 引数があれば
-    if (node->vector != NULL) {
-      for (Vector *cur = node->vector; cur != NULL; cur = cur->next) {
-        gen(cur->value);
+    if (node->argv != NULL) {
+      for (Node *cur = node->argv; cur != NULL; cur = cur->next) {
+        gen(cur);
       }
       for (int i = 0; i < node->argc; i++) {
         if (i == 0)
