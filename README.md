@@ -14,38 +14,27 @@ stmt  = expr ';'
 
 expr  = assign
 
-assign    = equality '=' assign
-          | equality '+=' assign
-          | equality '-=' assign
-          | equality '*=' assign
-          | equality '/=' assign
+assign    = equality ('=' | '+=' | '-=' | '*=' | '/=') assign
 
-equality  = relational '==' relational
-          | relational '!=' relational
+equality  = relational ('==' | '!=') relational
 
-relational  = add '<=' add
-            | add '>=' add
-            | add '<' add
-            | add '>' add
+relational  = add ('<=' | '>=' | '<' | '>') add
 
-add = mul '+' mul
-    | mul '-' mul
+add = mul ('+' | '-') mul
 
-mul = unary '*' unary
-    | unary '/' unary
+mul = unary ('*' | '/') unary
 
-unary = '+' inc
-      | '-' inc
-      | '&' inc
-      | '*' inc
+unary = ('+' | '-' | '&' | '*') inc
 
-inc = '++' primary
-    | '--' primary
-    | primary '++'
-    | primary '--'
+inc = ('++' | '--') primary
+    | primary ('++' | '--')
 
 primary = '(' expr ')'
         | ident
         | ident '(' ( expr (',' expr)* )? ')'
         | num
+
+ident = [a-zA-Z]*
+
+num = [0-9]*
 ```
