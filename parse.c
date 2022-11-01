@@ -42,6 +42,10 @@ bool foresee(char *op) {
   return true;
 }
 
+bool foresee_kind(TokenKind kind) {
+  return (token->kind == kind) ? true : false;
+}
+
 // 次のトークンが期待している記号の時は
 // トークンを1つ読み進めて真を返す
 bool consume(char *op) {
@@ -69,6 +73,10 @@ Token *consume_ident() {
   Token *ret = token;
   token = token->next;
   return ret;
+}
+
+TypeKind get_type() {
+  return token->type;
 }
 
 // 次のトークンが期待している記号の時には、トークンを1つ読み進める。
@@ -190,10 +198,24 @@ Node *stmt() {
   Node *node;
 
   // 変数宣言
-  if (consume_kind(TK_TYPE)) {
+  if (foresee_kind(TK_TYPE)) {
+    TypeKind type = get_type();
+    consume_kind(TK_TYPE);
+
     node = calloc(1, sizeof(Node));
     node->kind = ND_ASSIGN;
     node->is_declaration = true;
+
+    Type *type_head, *cur;
+    type_head = cur = calloc(1, sizeof(Type));
+    
+    // 型判別
+    while (consume("*")) {
+      cur->ty = TY_PTR;
+      cur->ptr_to = calloc(1, sizeof(Type));
+    }
+    
+    cur->ty = type;
 
     Token *tok = consume_ident();
 
@@ -209,6 +231,7 @@ Node *stmt() {
     lvar->len = tok->len;
     lvar->name = tok->str;
     lvar->offset = locals->offset + 8;
+    lvar->type = type_head;
     locals = lvar;
     node->offset = lvar->offset;
     node->name = lvar->name;
@@ -414,7 +437,7 @@ Node *unary() {
   if (consume("&")) 
     return new_node(ND_ADDR, inc(), NULL);
   if (consume("*"))
-    return new_node(ND_DEREF, inc(), NULL);
+    return new_node(ND_DEREF, unary(), NULL);
   return inc();
 }
 

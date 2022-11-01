@@ -21,6 +21,11 @@ int main() {
     a = 99;
     b = 10;
     assert(a + b, 109);
-        
+
+    int *ptr;
+    ptr = &a;
+    *ptr = 1;
+    assert(a, 1);
+    
     return 0;
 }

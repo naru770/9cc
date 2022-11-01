@@ -8,7 +8,7 @@
 typedef struct Node Node;
 typedef struct Token Token;
 typedef struct LVar LVar;
-typedef struct GVar GVar;
+typedef struct Type Type;
 
 // 抽象構文木のノードの種類
 typedef enum {
@@ -33,6 +33,17 @@ typedef enum {
   ND_DEREF,   // *
   ND_DEC      // 宣言
 } NodeKind;
+
+typedef enum {
+  TY_PTR,
+  TY_INT
+} TypeKind;
+
+struct Type {
+  TypeKind ty;
+  Type *ptr_to;
+};
+
 
 typedef enum {
   NO_INC,
@@ -82,14 +93,7 @@ struct Token {
   int val;        // kindがTK_NUMの場合、その数値
   char *str;      // トークン文字列
   int len;        // トークンの長さ
-};
-
-
-struct GVar {
-  GVar *next;
-  LVar *locals;     // 関数が持つローカル変数
-  char *name;     // 関数名
-  int len;        // 関数名の長さ
+  TypeKind type;
 };
 
 // ローカル変数の型
@@ -99,6 +103,7 @@ struct LVar {
   int len;
   int offset;
   bool is_func;   // 関数か変数か
+  Type *type;
 };
 
 // tokenize.c
@@ -134,6 +139,8 @@ void gen(Node *);
 
 // io.c
 char *read_file(char *path);
+
+
 
 extern Token *token;
 extern char *user_input;

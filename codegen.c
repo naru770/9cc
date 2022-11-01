@@ -1,11 +1,16 @@
 #include "9cc.h"
 
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR)
-    error("Assigned lvalue is not a variable.");
+  if (node->kind == ND_DEREF) {
+    gen(node->lhs);
   
-  printf("  lea rax, [rbp - %d]\n", node->offset);
-  printf("  push rax\n");
+  } else if (node->kind == ND_LVAR) {
+    printf("  lea rax, [rbp - %d]\n", node->offset);
+    printf("  push rax\n");
+  
+  } else {
+    error("Assigned lvalue is not a variable.");
+  }
 }
 
 void gen_global() {

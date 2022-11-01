@@ -33,6 +33,7 @@ void tokenize() {
 
     if (strncmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
       cur = new_token(TK_TYPE, cur, p, 3);
+      cur->type = TY_INT;
       p += 3;
       continue;
     }
