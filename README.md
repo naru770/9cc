@@ -34,6 +34,8 @@ primary = '(' expr ')'
         | ident '(' ( expr (',' expr)* )? ')'
         | num
 
+declarator = 'int'
+
 ident = [a-zA-Z]*
 
 num = [0-9]*
