@@ -30,8 +30,7 @@ inc = ('++' | '--') primary
     | primary ('++' | '--')
 
 primary = '(' expr ')'
-        | ident
-        | ident '(' [ expr {',' expr} ] ')'
+        | ident [ '(' [ expr {',' expr} ] ')' ]
         | num
 
 declarator = 'int'
