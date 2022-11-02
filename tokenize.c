@@ -68,15 +68,18 @@ void tokenize() {
       continue;
     }
 
-    // ローカル変数
+    // 識別子
     {
       char *var_p = p;
-      while (('A' <= *var_p && *var_p <= 'Z') ||
-             ('a' <= *var_p && *var_p <= 'z') ||
-             *var_p == '_') {
+      if (('A' <= *var_p && *var_p <= 'Z') ||
+          ('a' <= *var_p && *var_p <= 'z') ||
+          *var_p == '_') {
         var_p++;
-      }
-      if (var_p - p > 0) {
+
+        while (is_alnum(*var_p)) {
+          var_p++;
+        }
+      
         int len = var_p - p;
         cur = new_token(TK_IDENT, cur, p, len);
         p += len;

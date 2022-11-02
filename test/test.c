@@ -11,7 +11,7 @@ int sum(int a, int b, int c, int d, int e, int f) {
     return a + b + c + d + e + f;
 }
 
-int add_ten(int *ptr) {
+int add10(int *ptr) {
     *ptr += 10;
     return 0;
 }
@@ -33,7 +33,7 @@ int main() {
     assert(a, 1);
 
     a = 0;
-    add_ten(&a);
+    add10(&a);
     assert(a, 10);
     
     return 0;
