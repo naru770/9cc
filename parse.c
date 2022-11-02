@@ -156,26 +156,40 @@ void program() {
       node->argv = NULL;
     } else {
       for (;;) {
-        if (!consume_kind(TK_TYPE))
-          error("Declaration was expected");
 
-        Token *tk = consume_ident();
+        if (foresee_kind(TK_TYPE)) {
+          TypeKind ty = get_type();
+          consume_kind(TK_TYPE);
 
-        LVar *lvar = calloc(1, sizeof(LVar));
-        lvar->name = tk->str;
-        lvar->len = tk->len;
-        lvar->offset = locals->offset + 8;
-        lvar->next = locals;
-        locals = lvar;
-        
-        node->argc++;
+          Type *type_head, *cur;
+          type_head = cur = calloc(1, sizeof(Type));
 
-        if (consume(",")) {
-          continue;
-        } else if(consume(")")) {
-          break;
-        } else {
-          error("Something went wrong with argument");
+          while (consume("*")) {
+            cur->ty = TY_PTR;
+            cur->ptr_to = calloc(1, sizeof(Type));
+          }
+
+          cur->ty = ty;
+
+          Token *tk = consume_ident();
+
+          LVar *lvar = calloc(1, sizeof(LVar));
+          lvar->name = tk->str;
+          lvar->len = tk->len;
+          lvar->offset = locals->offset + 8;
+          lvar->next = locals;
+          lvar->type = type_head;
+          locals = lvar;
+
+          node->argc++;
+
+          if (consume(",")) {
+            continue;
+          } else if(consume(")")) {
+            break;
+          } else {
+            error("Something went wrong with argument");
+          }
         }
       }
     }
