@@ -2,7 +2,9 @@
 
 以下はこのコンパイラが認識する言語(EBNF記法)
 ```
-program = { declarator ident '(' [ declarator ident {',' declarator ident} ] ')' '{' {stmt} '}' }
+program = ( declarator ident
+            '(' [ declarator ident (',' declarator ident)* ] ')'
+            '{' {stmt} '}' )*
 
 stmt  = expr ';'
       | 'return' expr ';'
@@ -24,27 +26,24 @@ add = mul ('+' | '-') mul
 
 mul = unary ('*' | '/') unary
 
-unary = ('+' | '-' | '&' | { '*' }) inc
+unary = ('+' | '-' | '&' | '*'+ ) inc
 
 inc = ('++' | '--') primary
     | primary ('++' | '--')
 
 primary = '(' expr ')'
-        | ident [ '(' [ expr {',' expr} ] ')' ]
+        | ident [ '(' [ expr (',' expr)* ] ')' ]
         | num
 
 declarator = 'int'
 
-ident =  alu { alu | num }
+ident =  alu ( alu | num )*
 
 alu = al | '_'
 
-al =  'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
-    | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
-    | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
-    | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+al =  [a-zA-Z]
 
-num = digit { digit }
+num = digit+
 
-digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+digit = [0-9]
 ```
