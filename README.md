@@ -2,48 +2,48 @@
 
 以下はこのコンパイラが認識する言語(EBNF記法)
 ```
-program = ( declarator ident
-            '(' [ declarator ident (',' declarator ident)* ] ')'
-            '{' {stmt} '}' )*
+program = { func }
+
+func = type ident '(' type ident { ',' type idnet } ')' '{' [ stmt ] '}'
 
 stmt  = expr ';'
       | 'return' expr ';'
       | declarator ident ';'
-      | '{' stmt* '}'
-      | 'for' '(' expr? ';' expr?';' expr? ')' stmt
+      | '{' [ { stmt } ] '}'
+      | 'for' '(' [ expr ] ';' [ expr ] ';' [ expr ] ')' stmt
       | 'while' '(' expr ')' stmt
       | 'if' '(' expr ')' stmt 'else' stmt
 
 expr  = assign
 
-assign    = equality ('=' | '+=' | '-=' | '*=' | '/=') assign
+assign = equality { ('=' | '+=' | '-=' | '*=' | '/=') assign }
 
-equality  = relational ('==' | '!=') relational
+equality  = relational { ('==' | '!=') relational }
 
-relational  = add ('<=' | '>=' | '<' | '>') add
+relational  = add { ('<=' | '>=' | '<' | '>') add }
 
-add = mul ('+' | '-') mul
+add = mul { ('+' | '-') mul }
 
-mul = unary ('*' | '/') unary
+mul = unary { ('*' | '/') unary }
 
-unary = ('+' | '-' | '&' | '*'+ ) inc
+unary = [ ('+' | '-' | '&' | { '*' }) ] inc
 
-inc = ('++' | '--') primary
-    | primary ('++' | '--')
+inc = [ ('++' | '--') ] primary
+    | primary [ ('++' | '--') ]
 
 primary = '(' expr ')'
-        | ident [ '(' [ expr (',' expr)* ] ')' ]
+        | ident [ '(' [ expr { ',' expr } ] ')' ]
         | num
 
-declarator = 'int'
+type = 'int'
 
-ident =  alu ( alu | num )*
+ident =  alu { alu | num }
 
 alu = al | '_'
 
 al =  [a-zA-Z]
 
-num = digit+
+num = digit { digit }
 
 digit = [0-9]
 ```
